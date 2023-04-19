@@ -1,0 +1,14 @@
+[package]
+name = "axum-server-timing"
+version = "0.1.0"
+edition = "2021"
+authors = ["Jens Walter <jens@apimeister.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/JensWalter/axum-server-timing/"
+documentation = "https://docs.rs/axum-server-timing/"
+description = "An axum layer to inject the server-timing HTTP header into the response."
+
+[dependencies]
+axum = "0.6"
+tower = "0.4"
+pin-project-lite = "0.2"
