@@ -3,7 +3,7 @@
 
 An axum layer to inject the server-timing HTTP header into the response.
 
-For refence on the header please see [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server-Timing).
+For a reference on the header please see [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server-Timing).
 
 ## Examples
 
@@ -15,7 +15,7 @@ Using the layer to inject the Http-Timing Header.
 ```
 
 ### Output
-```
+```http
 HTTP/1.1 200 OK
 content-type: text/html; charset=utf-8
 content-length: 22
