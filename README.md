@@ -1,13 +1,13 @@
 # axum-server-timing
 [![Latest Version](https://img.shields.io/crates/v/axum-server-timing.svg)](https://crates.io/crates/axum-server-timing)
 
-An axum layer to inject the server-timing HTTP header into the response.
+An axum layer to inject the Server-Timing HTTP header into the response.
 
 For a reference on the header please see [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server-Timing).
 
 ## Examples
 
-Using the layer to inject the Http-Timing Header.
+Using the layer to inject the Server-Timing Header.
 ```rust
     let app = Router::new()
         .route("/", get(handler))
@@ -25,7 +25,7 @@ date: Wed, 19 Apr 2023 15:25:40 GMT
 <h1>Hello, World!</h1>
 ```
 
-Using the layer to inject the Http-Timing Header with description.
+Using the layer to inject the Server-Timing Header with description.
 ```rust
     let app = Router::new()
         .route("/", get(handler))
