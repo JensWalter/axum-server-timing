@@ -1,4 +1,6 @@
-# axum-server-time
+# axum-server-timing
+[![Latest Version](https://img.shields.io/crates/v/axum-server-timing.svg)](https://crates.io/crates/axum-server-timing)
+
 An axum layer to inject the server-timing HTTP header into the response.
 
 For refence on the header please see [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server-Timing).
