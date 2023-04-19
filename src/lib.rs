@@ -100,7 +100,7 @@ where
         let x = time.elapsed().as_millis();
         let header_value = match description {
             Some(val) => format!("{app};desc=\"{val}\";dur={x}"),
-            None => format!("{app};dur={x}")
+            None => format!("{app};dur={x}"),
         };
         hdr.append(
             "Server-Timing",
