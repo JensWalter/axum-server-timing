@@ -36,7 +36,7 @@ Using the layer to inject the Http-Timing Header with description.
 ```
 
 ### Output
-```
+```http
 HTTP/1.1 200 OK
 content-type: text/html; charset=utf-8
 content-length: 22
