@@ -1,41 +1,62 @@
-use std::{time::Instant, task::{Poll, Context, ready}, future::{Future}, pin::Pin};
+use std::{
+    future::Future,
+    pin::Pin,
+    task::{ready, Context, Poll},
+    time::Instant,
+};
 
-use axum::http::{Request, Response, HeaderValue};
+use axum::http::{HeaderValue, Request, Response};
 use pin_project_lite::pin_project;
-use tower::{Service, Layer};
+use tower::{Layer, Service};
 
 #[derive(Debug, Clone)]
-pub struct ServerTimingLayer {}
+pub struct ServerTimingLayer<'a> {
+    app: &'a str,
+    description: Option<&'a str>,
+}
 
-impl ServerTimingLayer {
-    pub fn new() -> Self {
-        ServerTimingLayer {}
+impl<'a> ServerTimingLayer<'a> {
+    pub fn new(app: &'a str) -> Self {
+        ServerTimingLayer {
+            app,
+            description: None,
+        }
+    }
+
+    pub fn with_description(&mut self, description: &'a str) -> Self {
+        let mut new_self = self.clone();
+        new_self.description = Some(description);
+        new_self
     }
 }
 
-impl<S> Layer<S> for ServerTimingLayer {
-    type Service = ServerTimingService<S>;
+impl<'a, S> Layer<S> for ServerTimingLayer<'a> {
+    type Service = ServerTimingService<'a, S>;
 
     fn layer(&self, service: S) -> Self::Service {
         ServerTimingService {
             service,
+            app: self.app,
+            description: self.description,
         }
     }
 }
 
 #[derive(Clone)]
-pub struct ServerTimingService<S> {
+pub struct ServerTimingService<'a, S> {
     service: S,
+    app: &'a str,
+    description: Option<&'a str>,
 }
 
-impl<S, ReqBody, ResBody> Service<Request<ReqBody>> for ServerTimingService<S>
+impl<'a, S, ReqBody, ResBody> Service<Request<ReqBody>> for ServerTimingService<'a, S>
 where
     S: Service<Request<ReqBody>, Response = Response<ResBody>>,
     ResBody: Default,
 {
     type Response = S::Response;
     type Error = S::Error;
-    type Future = ResponseFuture<S::Future>;
+    type Future = ResponseFuture<'a, S::Future>;
     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.service.poll_ready(cx)
     }
@@ -43,27 +64,27 @@ where
     fn call(&mut self, req: Request<ReqBody>) -> Self::Future {
         let (parts, body) = req.into_parts();
 
-            let req = Request::from_parts(parts, body);
-            ResponseFuture {
-                // inner: Kind::CorsCall {
-                    inner: self.service.call(req),
-                // },
-                request_time: Instant::now(),
-            }
+        let req = Request::from_parts(parts, body);
+        ResponseFuture {
+            inner: self.service.call(req),
+            request_time: Instant::now(),
+            app: self.app,
+            description: self.description,
+        }
     }
 }
-
 
 pin_project! {
-    pub struct ResponseFuture<F> {
+    pub struct ResponseFuture<'a, F> {
         #[pin]
         inner: F,
-        #[pin]
         request_time: Instant,
+        app: &'a str,
+        description: Option<&'a str>,
     }
 }
 
-impl<F, B, E> Future for ResponseFuture<F>
+impl<F, B, E> Future for ResponseFuture<'_, F>
 where
     F: Future<Output = Result<Response<B>, E>>,
     B: Default,
@@ -72,10 +93,19 @@ where
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let time = self.request_time;
+        let app = self.app;
+        let description = self.description;
         let mut response: Response<B> = ready!(self.project().inner.poll(cx))?;
         let hdr = response.headers_mut();
         let x = time.elapsed().as_millis();
-hdr.append("Server-Timing", HeaderValue::from_str(&format!("{x}")).unwrap());
+        let header_value = match description {
+            Some(val) => format!("{app};desc=\"{val}\";dur={x}"),
+            None => format!("{app};dur={x}")
+        };
+        hdr.append(
+            "Server-Timing",
+            HeaderValue::from_str(&header_value).unwrap(),
+        );
         Poll::Ready(Ok(response))
     }
 }

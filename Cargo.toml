@@ -12,3 +12,6 @@ description = "An axum layer to inject the server-timing HTTP header into the re
 axum = "0.6"
 tower = "0.4"
 pin-project-lite = "0.2"
+
+[dev-dependencies]
+tokio = {version = "1", features = ["full"] }
