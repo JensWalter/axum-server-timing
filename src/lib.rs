@@ -9,6 +9,9 @@ use axum::http::{HeaderValue, Request, Response};
 use pin_project_lite::pin_project;
 use tower::{Layer, Service};
 
+#[cfg(test)]
+mod test;
+
 #[derive(Debug, Clone)]
 pub struct ServerTimingLayer<'a> {
     app: &'a str,
@@ -102,10 +105,28 @@ where
             Some(val) => format!("{app};desc=\"{val}\";dur={x}"),
             None => format!("{app};dur={x}"),
         };
-        hdr.append(
-            "Server-Timing",
-            HeaderValue::from_str(&header_value).unwrap(),
-        );
+        match hdr.try_entry("Server-Timing") {
+            Ok(entry) => {
+                match entry {
+                    axum::http::header::Entry::Occupied(mut val) => {
+                        //has val
+                        let old_val = val.get();
+                        let new_val = format!("{header_value}, {}", old_val.to_str().unwrap());
+                        val.insert(HeaderValue::from_str(&new_val).unwrap());
+                    }
+                    axum::http::header::Entry::Vacant(val) => {
+                        val.insert(HeaderValue::from_str(&header_value).unwrap());
+                    }
+                }
+            }
+            Err(_) => {
+                hdr.append(
+                    "Server-Timing",
+                    HeaderValue::from_str(&header_value).unwrap(),
+                );
+            }
+        }
+
         Poll::Ready(Ok(response))
     }
 }
