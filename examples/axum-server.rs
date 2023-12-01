@@ -1,5 +1,5 @@
 use axum::{response::Html, routing::get, Router};
-use std::{net::SocketAddr, time::Duration};
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() {
@@ -7,10 +7,9 @@ async fn main() {
         axum_server_timing::ServerTimingLayer::new("HelloService").with_description("whatever"),
     );
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    println!("listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    println!("listening on 0.0.0.0:3000");
+    axum::serve(listener, app.into_make_service())
         .await
         .unwrap();
 }

@@ -3,7 +3,7 @@ use axum::{
     routing::get,
     Router,
 };
-use std::{net::SocketAddr, time::Duration};
+use std::time::Duration;
 
 use crate::ServerTimingLayer;
 
@@ -30,9 +30,8 @@ async fn header_exists_on_response() {
         .route("/", get(|| async move { "" }))
         .layer(ServerTimingLayer::new(name));
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3001));
-
-    tokio::spawn(axum::Server::bind(&addr).serve(app.into_make_service()));
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();
+    tokio::spawn(async { axum::serve(listener, app.into_make_service()).await });
     //test request
     let resp = reqwest::get("http://localhost:3001/").await.unwrap();
     let hdr = resp.headers().get("server-timing");
@@ -52,9 +51,9 @@ async fn header_value() {
         )
         .layer(ServerTimingLayer::new(name));
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3002));
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3002").await.unwrap();
+    tokio::spawn(async { axum::serve(listener, app.into_make_service()).await });
 
-    tokio::spawn(axum::Server::bind(&addr).serve(app.into_make_service()));
     //test request
     let resp = reqwest::get("http://localhost:3002/").await.unwrap();
     if let Some(hdr) = resp.headers().get("server-timing") {
@@ -81,9 +80,9 @@ async fn support_existing_header() {
         )
         .layer(ServerTimingLayer::new(name));
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3003));
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3003").await.unwrap();
+    tokio::spawn(async { axum::serve(listener, app.into_make_service()).await });
 
-    tokio::spawn(axum::Server::bind(&addr).serve(app.into_make_service()));
     //test request
     let resp = reqwest::get("http://localhost:3003/").await.unwrap();
     let hdr = resp.headers().get("server-timing").unwrap();
