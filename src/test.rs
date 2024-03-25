@@ -1,11 +1,10 @@
+use crate::ServerTimingLayer;
 use axum::{
     http::{HeaderMap, HeaderValue},
     routing::get,
     Router,
 };
 use std::time::Duration;
-
-use crate::ServerTimingLayer;
 
 #[test]
 fn service_name() {

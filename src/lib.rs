@@ -1,12 +1,11 @@
+use axum::http::{HeaderValue, Request, Response};
+use pin_project_lite::pin_project;
 use std::{
     future::Future,
     pin::Pin,
     task::{ready, Context, Poll},
     time::Instant,
 };
-
-use axum::http::{HeaderValue, Request, Response};
-use pin_project_lite::pin_project;
 use tower::{Layer, Service};
 
 #[cfg(test)]
