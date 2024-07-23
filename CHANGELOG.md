@@ -1,3 +1,8 @@
+# 1.0.0 2024-07-23
+
+* bump version to 1.0
+* update dependencies
+
 # 0.3.1 2024-03-25
 
 * update dependencies
