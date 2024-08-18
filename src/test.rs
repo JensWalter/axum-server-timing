@@ -58,7 +58,7 @@ async fn header_value() {
     if let Some(hdr) = resp.headers().get("server-timing") {
         let val = &hdr.to_str().unwrap()[9..];
         let val_num: f32 = val.parse().unwrap();
-        assert!(val_num > 100_f32);
+        assert!((100f32..300f32).contains(&val_num), "{val_num}");
     } else {
         panic!("no header found");
     }
