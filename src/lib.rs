@@ -103,7 +103,7 @@ where
         let x = time.elapsed().as_secs_f32() * 1000.0;
         let header_value = match description {
             Some(val) => format!("{app};desc=\"{val}\";dur={x:.2}"),
-            None => format!("{app};dur={x}"),
+            None => format!("{app};dur={x:.2}"),
         };
         match hdr.try_entry("Server-Timing") {
             Ok(entry) => {
