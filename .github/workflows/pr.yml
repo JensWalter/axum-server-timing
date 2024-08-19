@@ -1,0 +1,19 @@
+name: pr
+on:
+  workflow_dispatch:
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        components: rustfmt, clippy
+        cache: false
+    - name: Rustfmt Check
+      uses: actions-rust-lang/rustfmt@v1
+    - name: Run clippy
+      run: cargo clippy --all -- -D warnings
+    - name: Cargo Test
+      run: cargo test -q
