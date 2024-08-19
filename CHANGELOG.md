@@ -1,3 +1,10 @@
+# 1.0.1 2024-08-19
+
+* improve timing precision ([#2])
+* update dependencies
+
+[#2]: https://github.com/JensWalter/axum-server-timing/pull/2
+
 # 1.0.0 2024-07-23
 
 * bump version to 1.0
