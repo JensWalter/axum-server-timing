@@ -8,6 +8,7 @@ repository = "https://github.com/JensWalter/axum-server-timing/"
 documentation = "https://docs.rs/axum-server-timing/"
 description = "An axum layer to inject the Server-Timing HTTP header into the response."
 rust-version = "1.70"
+keywords = ["axum-server", "http-header", "web-server"]
 
 [dependencies]
 axum = "0.7"
