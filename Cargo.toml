@@ -8,13 +8,14 @@ repository = "https://github.com/JensWalter/axum-server-timing/"
 documentation = "https://docs.rs/axum-server-timing/"
 description = "An axum layer to inject the Server-Timing HTTP header into the response."
 rust-version = "1.70"
-keywords = ["axum-server", "http-header", "web-server"]
+keywords = ["axum", "http-header", "web-server"]
 
 [dependencies]
-axum = "0.8"
+http = "1"
 tower = "0.5"
 pin-project-lite = "0.2"
 
 [dev-dependencies]
 tokio = {version = "1", features = ["full"] }
 reqwest = { version = "0.12" }
+axum = { version = "0.8" }

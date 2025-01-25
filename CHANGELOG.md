@@ -1,3 +1,7 @@
+# 2.0.1 2024-01-27
+
+* remove axum from dependencies
+
 # 2.0.0 2024-01-01
 
 * adopt braking changes in axum 0.8

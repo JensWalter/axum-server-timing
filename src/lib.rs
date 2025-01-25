@@ -1,4 +1,4 @@
-use axum::http::{HeaderValue, Request, Response};
+use http::{HeaderValue, Request, Response};
 use pin_project_lite::pin_project;
 use std::{
     future::Future,
@@ -108,13 +108,13 @@ where
         match hdr.try_entry("Server-Timing") {
             Ok(entry) => {
                 match entry {
-                    axum::http::header::Entry::Occupied(mut val) => {
+                    http::header::Entry::Occupied(mut val) => {
                         //has val
                         let old_val = val.get();
                         let new_val = format!("{header_value}, {}", old_val.to_str().unwrap());
                         val.insert(HeaderValue::from_str(&new_val).unwrap());
                     }
-                    axum::http::header::Entry::Vacant(val) => {
+                    http::header::Entry::Vacant(val) => {
                         val.insert(HeaderValue::from_str(&header_value).unwrap());
                     }
                 }
