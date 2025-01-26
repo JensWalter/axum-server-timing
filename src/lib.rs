@@ -10,7 +10,7 @@ use std::{
 use tower::{Layer, Service};
 
 #[allow(dead_code)]
-type ServerTimingExtension = Arc<Mutex<ServerTiming>>;
+pub type ServerTimingExtension = Arc<Mutex<ServerTiming>>;
 
 #[derive(Debug)]
 pub struct ServerTiming {
