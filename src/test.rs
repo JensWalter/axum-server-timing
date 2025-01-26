@@ -1,8 +1,8 @@
-use crate::ServerTimingLayer;
+use crate::{ServerTimingExtension, ServerTimingLayer};
 use axum::{
     http::{HeaderMap, HeaderValue},
     routing::get,
-    Router,
+    Extension, Router,
 };
 use std::time::Duration;
 
@@ -89,4 +89,33 @@ async fn support_existing_header() {
     assert!(hdr_str.contains("svc1"));
     assert!(hdr_str.contains("inner"));
     println!("{hdr:?}");
+}
+
+#[tokio::test]
+async fn extension_works() {
+    let name = "service";
+    let app = Router::new()
+        .route(
+            "/",
+            get(|x: Extension<ServerTimingExtension>| async move {
+                let timing = x.0.clone();
+
+                // lock and unlock in one statement, so the mutex is not kept through the async call
+                timing.lock().unwrap().record("step1".to_string(), None);
+                tokio::time::sleep(Duration::from_millis(100)).await;
+
+                // second call, and again lock the mutex since it was released before the async call
+                timing.lock().unwrap().record("step2".to_string(), None);
+                "".to_string()
+            }),
+        )
+        .layer(ServerTimingLayer::new(name));
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3004").await.unwrap();
+    tokio::spawn(async { axum::serve(listener, app.into_make_service()).await });
+    //test request
+    let resp = reqwest::get("http://localhost:3004/").await.unwrap();
+    let hdr = resp.headers().get("server-timing");
+    println!("{hdr:?}");
+    assert!(hdr.is_some());
 }

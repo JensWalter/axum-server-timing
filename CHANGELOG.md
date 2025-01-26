@@ -1,6 +1,7 @@
 # 2.0.1 2024-01-27
 
 * remove axum from dependencies
+* provide extension type for more detailed timings
 
 # 2.0.0 2024-01-01
 

@@ -3,10 +3,39 @@ use pin_project_lite::pin_project;
 use std::{
     future::Future,
     pin::Pin,
+    sync::{Arc, Mutex},
     task::{ready, Context, Poll},
     time::Instant,
 };
 use tower::{Layer, Service};
+
+#[allow(dead_code)]
+type ServerTimingExtension = Arc<Mutex<ServerTiming>>;
+
+#[derive(Debug)]
+pub struct ServerTiming {
+    app: String,
+    description: Option<String>,
+    created: Instant,
+    data: Vec<ServerTimingData>,
+}
+
+impl ServerTiming {
+    pub fn record(&mut self, name: String, description: Option<String>) {
+        self.data.push(ServerTimingData {
+            name,
+            description,
+            created: Instant::now(),
+        });
+    }
+}
+
+#[derive(Debug)]
+pub struct ServerTimingData {
+    name: String,
+    description: Option<String>,
+    created: Instant,
+}
 
 #[cfg(test)]
 mod test;
@@ -51,42 +80,47 @@ pub struct ServerTimingService<'a, S> {
     description: Option<&'a str>,
 }
 
-impl<'a, S, ReqBody, ResBody> Service<Request<ReqBody>> for ServerTimingService<'a, S>
+impl<S, ReqBody, ResBody> Service<Request<ReqBody>> for ServerTimingService<'_, S>
 where
     S: Service<Request<ReqBody>, Response = Response<ResBody>>,
     ResBody: Default,
 {
     type Response = S::Response;
     type Error = S::Error;
-    type Future = ResponseFuture<'a, S::Future>;
+    type Future = ResponseFuture<S::Future>;
     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.service.poll_ready(cx)
     }
 
-    fn call(&mut self, req: Request<ReqBody>) -> Self::Future {
+    fn call(&mut self, mut req: Request<ReqBody>) -> Self::Future {
+        let timings = ServerTiming {
+            app: self.app.to_string(),
+            created: Instant::now(),
+            description: self.description.map(|elem| elem.to_string()),
+            data: vec![],
+        };
+        let x = Arc::new(Mutex::new(timings));
+        req.extensions_mut().insert(x.clone());
+
         let (parts, body) = req.into_parts();
 
         let req = Request::from_parts(parts, body);
         ResponseFuture {
             inner: self.service.call(req),
-            request_time: Instant::now(),
-            app: self.app,
-            description: self.description,
+            timings: x,
         }
     }
 }
 
 pin_project! {
-    pub struct ResponseFuture<'a, F> {
+    pub struct ResponseFuture<F> {
         #[pin]
         inner: F,
-        request_time: Instant,
-        app: &'a str,
-        description: Option<&'a str>,
+        timings: Arc<Mutex<ServerTiming>>,
     }
 }
 
-impl<F, B, E> Future for ResponseFuture<'_, F>
+impl<F, B, E> Future for ResponseFuture<F>
 where
     F: Future<Output = Result<Response<B>, E>>,
     B: Default,
@@ -94,17 +128,28 @@ where
     type Output = Result<Response<B>, E>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let time = self.request_time;
-        let app = self.app;
-        let description = self.description;
+        let timing = self.timings.clone();
         let mut response: Response<B> = ready!(self.project().inner.poll(cx))?;
         let hdr = response.headers_mut();
         // TODO: Once stable for a while, use `as_millis_f32`
-        let x = time.elapsed().as_secs_f32() * 1000.0;
-        let header_value = match description {
+        let timing_after = timing.lock().unwrap();
+        let x = timing_after.created.elapsed().as_secs_f32() * 1000.0;
+        let app = timing_after.app.clone();
+        let mut header_value = match &timing_after.description {
             Some(val) => format!("{app};desc=\"{val}\";dur={x:.2}"),
             None => format!("{app};dur={x:.2}"),
         };
+        let mut ts = timing_after.created;
+        for data in timing_after.data.iter() {
+            let x = (data.created - ts).as_secs_f32() * 1000.0;
+            ts = data.created;
+            let name = data.name.clone();
+            let newval = match &data.description {
+                Some(val) => format!("{name};desc=\"{val}\";dur={x:.2}"),
+                None => format!("{name};dur={x:.2}"),
+            };
+            header_value = format!("{header_value}, {newval}");
+        }
         match hdr.try_entry("Server-Timing") {
             Ok(entry) => {
                 match entry {
