@@ -97,9 +97,8 @@ async fn extension_works() {
     let app = Router::new()
         .route(
             "/",
-            get(|x: Extension<ServerTimingExtension>| async move {
-                let timing = x.0.clone();
-
+            get(|Extension(timing): Extension<ServerTimingExtension>| async move {
+                
                 // lock and unlock in one statement, so the mutex is not kept through the async call
                 timing.lock().unwrap().record("step1".to_string(), None);
                 tokio::time::sleep(Duration::from_millis(100)).await;
