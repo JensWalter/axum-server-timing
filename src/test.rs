@@ -97,16 +97,17 @@ async fn extension_works() {
     let app = Router::new()
         .route(
             "/",
-            get(|Extension(timing): Extension<ServerTimingExtension>| async move {
-                
-                // lock and unlock in one statement, so the mutex is not kept through the async call
-                timing.lock().unwrap().record("step1".to_string(), None);
-                tokio::time::sleep(Duration::from_millis(100)).await;
+            get(
+                |Extension(timing): Extension<ServerTimingExtension>| async move {
+                    // lock and unlock in one statement, so the mutex is not kept through the async call
+                    timing.lock().unwrap().record("step1".to_string(), None);
+                    tokio::time::sleep(Duration::from_millis(100)).await;
 
-                // second call, and again lock the mutex since it was released before the async call
-                timing.lock().unwrap().record("step2".to_string(), None);
-                "".to_string()
-            }),
+                    // second call, and again lock the mutex since it was released before the async call
+                    timing.lock().unwrap().record("step2".to_string(), None);
+                    "".to_string()
+                },
+            ),
         )
         .layer(ServerTimingLayer::new(name));
 

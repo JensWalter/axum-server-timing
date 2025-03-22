@@ -5,7 +5,7 @@ use std::{
     pin::Pin,
     sync::{Arc, Mutex},
     task::{ready, Context, Poll},
-    time::Instant,
+    time::{Duration, Instant},
 };
 use tower::{Layer, Service};
 
@@ -21,11 +21,26 @@ pub struct ServerTiming {
 }
 
 impl ServerTiming {
+    /// records the duration of the current operation
+    /// the duration is always relative to the last data point (record or creation)
     pub fn record(&mut self, name: String, description: Option<String>) {
+        let duration = if self.data.is_empty() {
+            Instant::now() - self.created
+        } else {
+            self.data.last().unwrap().duration
+        };
         self.data.push(ServerTimingData {
             name,
             description,
-            created: Instant::now(),
+            duration,
+        });
+    }
+    /// records a duration of an operation
+    pub fn record_timing(&mut self, name: String, duration: Duration, description: Option<String>) {
+        self.data.push(ServerTimingData {
+            name,
+            description,
+            duration,
         });
     }
 }
@@ -34,7 +49,7 @@ impl ServerTiming {
 pub struct ServerTimingData {
     name: String,
     description: Option<String>,
-    created: Instant,
+    duration: Duration,
 }
 
 #[cfg(test)]
@@ -139,10 +154,8 @@ where
             Some(val) => format!("{app};desc=\"{val}\";dur={x:.2}"),
             None => format!("{app};dur={x:.2}"),
         };
-        let mut ts = timing_after.created;
         for data in timing_after.data.iter() {
-            let x = (data.created - ts).as_secs_f32() * 1000.0;
-            ts = data.created;
+            let x = data.duration.as_secs_f32() * 1000.0;
             let name = data.name.clone();
             let newval = match &data.description {
                 Some(val) => format!("{name};desc=\"{val}\";dur={x:.2}"),
