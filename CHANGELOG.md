@@ -1,9 +1,9 @@
-# 2.1.0 2024-03-27
+# 3.0.0 2025-06-05
 
-* remove axum from dependencies
+* remove axum,tokio from dependencies
 * provide extension type for more detailed timings
 
-# 2.0.0 2024-01-01
+# 2.0.0 2025-01-01
 
 * adopt braking changes in axum 0.8
 
