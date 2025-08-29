@@ -34,6 +34,7 @@ async fn header_exists_on_response() {
     //test request
     let resp = reqwest::get("http://localhost:3001/").await.unwrap();
     let hdr = resp.headers().get("server-timing");
+    println!("{hdr:?}");
     assert!(hdr.is_some());
 }
 
