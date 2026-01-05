@@ -1,3 +1,7 @@
+# 3.0.1 2026-01-05
+
+* bump the reqwest dependency
+
 # 3.0.0 2025-06-05
 
 * remove axum,tokio from dependencies
