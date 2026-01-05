@@ -1,6 +1,6 @@
 [package]
 name = "axum-server-timing"
-version = "3.0.0"
+version = "3.0.1"
 edition = "2021"
 authors = ["Jens Walter <jens@apimeister.com>"]
 license = "MIT OR Apache-2.0"
@@ -17,5 +17,5 @@ pin-project-lite = "0.2"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
-reqwest = { version = "0.12" }
+reqwest = { version = "0.13" }
 axum = { version = "0.8", features = ["macros"] }
